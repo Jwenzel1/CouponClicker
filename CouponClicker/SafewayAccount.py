@@ -2,8 +2,8 @@ from json import dumps
 from requests import Session
 
 from settings import (
-    COUPONS_URL, COUPON_URL, INITIAL_COOKIES, INITIAL_HEADERS,
-    LOGIN_URL, SAFEWAY_URL)
+    CLIP_COUPON_URL, COUPONS_URL, COUPON_URL, INITIAL_COOKIES,
+    INITIAL_HEADERS, LOGIN_URL, SAFEWAY_URL)
 
 
 class SafewayAccount(object):
@@ -124,3 +124,37 @@ class SafewayAccount(object):
         url = COUPON_URL.format(offerID=offerID, offerTS=offerTS)
         res = self.session.get(url)
         return res.json()
+
+    def clipCoupon(self, coupon):
+        cookies = self.session.cookies.get_dict()
+        headers = {
+            "X-SWY_API_KEY": INITIAL_COOKIES["SWY_API_KEY"],
+            "X-SWY_BANNER": INITIAL_COOKIES["SWY_BANNER"],
+            "X-SWY_ISREMEMBERED": "False",
+            "X-SWY_VERSION": INITIAL_COOKIES["SWY_VERSION"],
+            "X-swyConsumerDirectoryPro": cookies["swyConsumerDirectoryPro"],
+            "X-swyConsumerlbcookie": cookies["swyConsumerlbcookie"]
+        }
+        payload = {
+            "items": [
+                {
+                    "clipType": "C",
+                    "itemId": coupon["offerId"],
+                    "itemType": coupon["offerPgm"],
+                    "vndrBannerCd": ""
+                    # "vndrBannerCd": "" if coupon["offerPgm"] == "SC" else
+                },
+                {
+                    "clipType": "L",
+                    "itemId": coupon["offerId"],
+                    "itemType": coupon["offerPgm"]
+                }
+            ]
+        }
+        self.session.post(CLIP_COUPON_URL, headers=headers, json=payload)
+
+    def clipAllCoupons(self):
+        coupons = self.getCoupons()
+        for coupon in coupons:
+            if coupon["clipStatus"] == "U":
+                self.clipCoupon(coupon)
