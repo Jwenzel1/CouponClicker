@@ -126,6 +126,11 @@ class SafewayAccount(object):
         return res.json()
 
     def clipCoupon(self, coupon):
+        """Adds a coupon to your account.
+        
+        This is the method does the same thing as clicking the 'add'
+        button on the website.
+        """
         cookies = self.session.cookies.get_dict()
         headers = {
             "X-SWY_API_KEY": INITIAL_COOKIES["SWY_API_KEY"],
@@ -142,6 +147,8 @@ class SafewayAccount(object):
                     "itemId": coupon["offerId"],
                     "itemType": coupon["offerPgm"],
                     "vndrBannerCd": ""
+                    # I dont knoww where this value is found on the page or in
+                    # cookies. It does not seem to matter though
                     # "vndrBannerCd": "" if coupon["offerPgm"] == "SC" else
                 },
                 {
@@ -154,6 +161,7 @@ class SafewayAccount(object):
         self.session.post(CLIP_COUPON_URL, headers=headers, json=payload)
 
     def clipAllCoupons(self):
+        """Add all coupons into your account"""
         coupons = self.getCoupons()
         clips = 0
         for coupon in coupons:
