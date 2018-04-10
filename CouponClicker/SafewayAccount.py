@@ -155,6 +155,9 @@ class SafewayAccount(object):
 
     def clipAllCoupons(self):
         coupons = self.getCoupons()
+        clips = 0
         for coupon in coupons:
             if coupon["clipStatus"] == "U":
                 self.clipCoupon(coupon)
+                clips += 1
+        return clips
