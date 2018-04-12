@@ -27,7 +27,9 @@ class SafewayAccount(object):
         also contains additional information needed for getting
         coupons.
         """
+        print(f"Getting initial session cookie.")
         self.session.get(SAFEWAY_URL)
+        print("Got initial cookie")
 
     def _authenticate(self):
         """Log into www.safeway.com.
@@ -40,7 +42,10 @@ class SafewayAccount(object):
             "source": "WEB",
             "userId": self.uname
         }
+        print("Authenticating with user's credentials: "
+              f"{dumps(payload, indent=4)}")
         self.session.post(LOGIN_URL, json=payload)
+        print(f"Authentication Successful.")
 
     def getCoupons(self):
         """Get a list of all coupons in the account.
@@ -77,8 +82,11 @@ class SafewayAccount(object):
             "X-swyConsumerDirectoryPro": cookies["swyConsumerDirectoryPro"],
             "X-swyConsumerlbcookie": cookies["swyConsumerlbcookie"]
         }
+        print(f"Retrieving all coupons for account {self.uname}")
         res = self.session.get(COUPONS_URL, headers=headers)
-        return res.json().get("offers", [])
+        res = res.json().get("offers", [])
+        print(f"Retrieved {len(res)} total coupons.")
+        return res
 
     def getCouponById(self, offerID: int, offerTS: int):
         """Get coupon details given the offerID and offerTS
@@ -158,14 +166,16 @@ class SafewayAccount(object):
                 }
             ]
         }
+        print(f"Adding {coupon['offerid']} to your account.")
         self.session.post(CLIP_COUPON_URL, headers=headers, json=payload)
 
     def clipAllCoupons(self):
         """Add all coupons into your account"""
         coupons = self.getCoupons()
+        print(f"Adding all unclipped coupons to your account.")
         clips = 0
         for coupon in coupons:
             if coupon["clipStatus"] == "U":
                 self.clipCoupon(coupon)
                 clips += 1
-        return clips
+        print(f"Added {clips} coupons to your account.")

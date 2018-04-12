@@ -6,5 +6,4 @@ if __name__ == "__main__":
     args = handle_args()
     user, pword = args.user, args.pword
     acc = SafewayAccount(user, pword)
-    clips = acc.clipAllCoupons()
-    print(f"Clipped {clips} coupons.")
+    acc.clipAllCoupons()
