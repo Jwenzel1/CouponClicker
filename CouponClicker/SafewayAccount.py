@@ -166,7 +166,7 @@ class SafewayAccount(object):
                 }
             ]
         }
-        print(f"Adding {coupon['offerid']} to your account.")
+        print(f"Adding {coupon['offerId']} to your account.")
         self.session.post(CLIP_COUPON_URL, headers=headers, json=payload)
 
     def clipAllCoupons(self):
