@@ -3,6 +3,7 @@ from time import sleep
 
 import requests
 from selenium import webdriver
+from selenium.common.exceptions import WebDriverException
 
 from constants import ClipStatuses
 
@@ -11,13 +12,15 @@ class SafewayCoupons(object):
     def __init__(self, username, password):
         self.username = username
         self.password = password
-        self.auth_headers = {}
-        self.store_id = 0
-        self.authenticate()
+        self.auth_headers, self.store_id = self.authenticate()
 
     def authenticate(self):
         # Use selenium to perform the login and grab the token
-        driver = webdriver.Chrome()
+        try:
+            driver = webdriver.Chrome()
+        except WebDriverException:
+            print("Chrome not detected. Trying Firefox.")
+            driver = webdriver.Firefox()
         driver.get("http://www.safeway.com")
         driver.find_element_by_link_text("Sign In").click()
         driver.find_element_by_id("input-email").send_keys(self.username)
@@ -30,12 +33,13 @@ class SafewayCoupons(object):
             'return window.localStorage.getItem("okta-token-storage")')
         access_token_info = json.loads(access_token_info)
         driver.quit()
-        self.auth_headers = {
+        auth_headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3497.100 Safari/537.36",
             "X-swyConsumerDirectoryPro": access_token_info["access_token"]["accessToken"],
             "Authorization": f'Bearer {access_token_info["access_token"]["accessToken"]}'
         }
-        self.store_id = store_id
+        store_id = store_id
+        return auth_headers, store_id
 
     def get_coupons(self):
         params = {
