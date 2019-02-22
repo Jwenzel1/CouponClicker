@@ -5,7 +5,8 @@ import requests
 from selenium import webdriver
 from selenium.common.exceptions import WebDriverException
 
-from constants import ClipStatuses
+from couponclicker.constants import ClipStatuses
+
 
 class SafewayCoupons(object):
 
