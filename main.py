@@ -1,8 +1,8 @@
 import json
 from configparser import ConfigParser
+from textwrap import dedent
 
 from couponclicker.commands import handle_args
-from couponclicker.constants import CONFIG_FILE
 from couponclicker.safeway import SafewayCoupons
 
 if __name__ == "__main__":
@@ -11,9 +11,14 @@ if __name__ == "__main__":
         username, password = params.username, params.password
     else:
         config = ConfigParser()
-        config.read(CONFIG_FILE)
+        config.read(params.config)
         username = config["safeway.com"]["username"]
         password = config["safeway.com"]["password"]
     s = SafewayCoupons(username, password)
-    output = s.clip_all_coupons()
-    print(json.dumps(output, indent=4))
+    total, added, skipped = s.clip_all_coupons()
+    print(dedent(f"""
+        Total = {total}
+        Added = {added}
+        Skipped = {skipped}
+    """))    
+    input("Press ENTER to exit.")
