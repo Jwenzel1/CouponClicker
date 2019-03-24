@@ -8,21 +8,14 @@ def handle_args():
         description=ARGPARSE_SETTIGNS["description"],
         epilog=ARGPARSE_SETTIGNS["epilogue"],
     )
-    parser.add_argument(
-        ARGS_SETTINGS[Arg.CONFIG]["short"],
-        ARGS_SETTINGS[Arg.CONFIG]["long"],
-        help=ARGS_SETTINGS[Arg.CONFIG]["help"],
-        default=ARGS_SETTINGS[Arg.CONFIG]["default"],
-    )
-    parser.add_argument(
-        ARGS_SETTINGS[Arg.USER]["short"],
-        ARGS_SETTINGS[Arg.USER]["long"],
-        help=ARGS_SETTINGS[Arg.USER]["help"],
-    )
-    parser.add_argument(
-        ARGS_SETTINGS[Arg.PASS]["short"],
-        ARGS_SETTINGS[Arg.PASS]["long"],
-        help=ARGS_SETTINGS[Arg.PASS]["help"],
-    )
-
+    for a in Arg:
+        options = {}
+        for k, v in ARGS_SETTINGS[a].items():
+            if k not in ARGS_SETTINGS["REQUIRED"]:
+                options[k] = v
+        parser.add_argument(
+            ARGS_SETTINGS[a]["short"],
+            ARGS_SETTINGS[a]["long"],
+            **options
+        )
     return parser.parse_args()

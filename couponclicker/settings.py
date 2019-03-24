@@ -9,6 +9,7 @@ class Arg(Enum):
 
 
 ARGS_SETTINGS = {
+    "REQUIRED": {"short", "long"},
     Arg.CONFIG: {
         "short": "-c",
         "long": "--config",
