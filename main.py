@@ -20,5 +20,5 @@ if __name__ == "__main__":
         Total = {total}
         Added = {added}
         Skipped = {skipped}
-    """))    
+    """))
     input("Press ENTER to exit.")
