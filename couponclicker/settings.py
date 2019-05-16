@@ -35,11 +35,9 @@ ARGS_SETTINGS = {
 ARGPARSE_SETTIGNS = {
     "description": dedent("""
         Activate all J4U offers in a Safeway account.
-
-        By default, searches for a config.ini file in the root of the project
+        By default, searches for a 'config.ini' file in the same directory as 'main.py'
         that contains creds for your safeway account. You can specify the
         location of the config file with the -c parameter.
-
         You can also pass in your username and password via the
         commandline using the -u and -p arguments."""),
     "epilogue": "\n"

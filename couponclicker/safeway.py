@@ -41,6 +41,7 @@ class SafewayCoupons(object):
             print("Chrome not detected. Trying Firefox.")
             driver = webdriver.Firefox()
         driver.implicitly_wait(10)
+        driver.maximize_window()
         driver.get("https://www.safeway.com")
         driver.find_element_by_id("myaccount-button").click()
         driver.find_element_by_id("linkToSignIn").click()
