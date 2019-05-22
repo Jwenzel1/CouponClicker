@@ -15,23 +15,36 @@ from couponclicker.models import ClipCouponResponse, GetCouponsResponse, Offer
 
 class SafewayCoupons(object):
 
-    def __init__(self, username, password):
+    def __init__(self, username: str, password: str):
         self.username = username
         self.password = password
-        self.coupons_overview = {}
         self.access_token = ""
         self.user_agent = ""
+        self.store_id = ""
         self.session = requests.Session()
         self.authenticate()
         # self.auth_headers, self.store_id = self.authenticate()
 
     @property
-    def store_id(self):
-        return self.coupons_overview.get("storeId", 0)
-
-    @property
-    def coupons(self):
-        return self.coupons_overview.get("objCoupons", [])
+    def coupons_headers(self) -> dict:
+        return {
+            "User-Agent": self.user_agent,
+            "Accept": "application/json, text/plain, */*",
+            "Accept-Language": "en-US,en;q=0.5",
+            "Accept-Encoding": "gzip, deflate, br",
+            "X-SWY_VERSION": "1.0",
+            "X-SWY_BANNER": "safeway",
+            "X-IBM-Client-Id": "306b9569-2a31-4fb9-93aa-08332ba3c55d",
+            "X-IBM-Client-Secret": "N4tK3pW7pP6nB4kL6vN4kW0rS5lE4qH2fY0aB2rK1eP5gK4yV5",
+            "Content-Type": "application/json",
+            "X-SWY_API_KEY": "emjou",
+            "DNT": "1",
+            "X-swyConsumerDirectoryPro": self.access_token,
+            "SWY_SSO_TOKEN": self.access_token,
+            "Connection": "keep-alive",
+            "Pragma": "no-cache",
+            "Cache-Control": "no-cache",
+        }
 
     def authenticate(self):
         # Use selenium to perform the login and grab the token
@@ -44,6 +57,7 @@ class SafewayCoupons(object):
         driver.maximize_window()
         driver.get("https://www.safeway.com")
         driver.find_element_by_id("myaccount-button").click()
+        sleep(1)
         driver.find_element_by_id("linkToSignIn").click()
         driver.find_element_by_id("label-email").send_keys(self.username)
         driver.find_element_by_id("label-password").send_keys(self.password)
@@ -60,9 +74,29 @@ class SafewayCoupons(object):
             self.session.cookies.set(cookie["name"], cookie["value"], domain=cookie["domain"], path=cookie["path"])
         token_dict = json.loads(unquote(self.session.cookies.get("SWY_SHARED_SESSION")))
         self.access_token = token_dict["accessToken"]
-        self.coupons_overview = json.loads(driver.execute_script('return localStorage.getItem("abJ4uCoupons")'))
+        coupons_info = json.loads(driver.execute_script('return localStorage.getItem("abCoupons")'))
+        self.store_id = coupons_info["branchId"]
+        # print(self.store_id)
         self.user_agent = driver.execute_script('return navigator.userAgent')
         driver.close()
+
+    def get_coupons(self) -> list:
+        try:
+            res = self.session.get(
+                "https://www.safeway.com/abs/pub/web/j4u/api/offers/gallery",
+                params={
+                    "storeId": self.store_id,
+                    "offerPgm": "PD-CC"
+                },
+                headers=self.coupons_headers)
+            res.raise_for_status()
+        except requests.HTTPError:
+            print(f"Failed to get coupons. Response has this content: {res.content}")
+            raise
+        coupons = res.json()
+        # print(json.dumps(coupons, indent=4))
+        return coupons["PD"] + coupons["CC"]
+
 
     def clip_coupon(self, coupon: dict) -> bool:
         output = False
@@ -86,25 +120,7 @@ class SafewayCoupons(object):
                 res = self.session.post(
                     "https://www.safeway.com/abs/pub/web/j4u/api/offers/clip",
                     params={"storeId": self.store_id},
-                    headers={
-                        "User-Agent": self.user_agent,
-                        "Accept": "application/json, text/plain, */*",
-                        "Accept-Language": "en-US,en;q=0.5",
-                        "Accept-Encoding": "gzip, deflate, br",
-                        "Referer": "https://www.safeway.com/justforu/coupons-deals.html?r=https%3A%2F%2Fwww.safeway.com%2Fhome.html",
-                        "X-SWY_VERSION": "1.0",
-                        "X-SWY_BANNER": "safeway",
-                        "X-IBM-Client-Id": "306b9569-2a31-4fb9-93aa-08332ba3c55d",
-                        "X-IBM-Client-Secret": "N4tK3pW7pP6nB4kL6vN4kW0rS5lE4qH2fY0aB2rK1eP5gK4yV5",
-                        "Content-Type": "application/json",
-                        "X-SWY_API_KEY": "emjou",
-                        "DNT": "1",
-                        "X-swyConsumerDirectoryPro": self.access_token,
-                        "SWY_SSO_TOKEN": self.access_token,
-                        "Connection": "keep-alive",
-                        "Pragma": "no-cache",
-                        "Cache-Control": "no-cache",
-                    },
+                    headers=self.coupons_headers,
                     json=payload
                 )
                 res.raise_for_status()
@@ -118,7 +134,7 @@ class SafewayCoupons(object):
 
     def clip_all_coupons(self) -> Tuple[int, int, int]:
         total, added, skipped = 0, 0, 0
-        for coupon in self.coupons:
+        for coupon in self.get_coupons():
             result = self.clip_coupon(coupon)
             total += 1
             if result:

@@ -15,10 +15,10 @@ if __name__ == "__main__":
         username = config["safeway.com"]["username"]
         password = config["safeway.com"]["password"]
     s = SafewayCoupons(username, password)
+    # s.get_coupons()
     total, added, skipped = s.clip_all_coupons()
-    print(dedent(f"""
-        Total = {total}
-        Added = {added}
-        Skipped = {skipped}
-    """))
+    print("\n".join([
+        f"Total = {total}",
+        f"Added = {added}",
+        f"Skipped = {skipped}"]))
     input("Press ENTER to exit.")
